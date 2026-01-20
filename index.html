@@ -1,0 +1,1590 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 375px;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+            position: relative;
+            transition: transform 0.3s ease;
+        }
+        
+        .container.menu-open {
+            transform: translateX(250px);
+        }
+        
+        /* === منوی سمت چپ === */
+        .sidebar-menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 250px;
+            height: 100vh;
+            background: white;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .sidebar-menu.open {
+            transform: translateX(0);
+        }
+        
+        /* هدر پروفایل */
+        .profile-header {
+            padding: 20px;
+            background: #f8f9fa;
+            text-align: center;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .avatar {
+            width: 60px;
+            height: 60px;
+            background: #2c3e50;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .user-name {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+        
+        .user-code {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 15px;
+        }
+        
+        .register-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s;
+        }
+        
+        /* سه حالت مختلف دکمه */
+        .register-btn.normal {
+            background: #3498db;
+            color: white;
+        }
+        
+        .register-btn.normal:hover {
+            background: #2980b9;
+        }
+        
+        .register-btn.waiting {
+            background: #f39c12;
+            color: white;
+        }
+        
+        .register-btn.waiting:hover {
+            background: #d68910;
+        }
+        
+        .register-btn.approved {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .register-btn.approved:hover {
+            background: #229954;
+        }
+        
+        /* آیتم‌های منو */
+        .menu-items {
+            flex: 1;
+            padding: 10px 0;
+        }
+        
+        .menu-item {
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            color: #333;
+            font-size: 16px;
+            transition: background 0.2s;
+        }
+        
+        .menu-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .menu-icon {
+            margin-left: 15px;
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+        
+        .menu-text {
+            flex: 1;
+        }
+        
+        /* خط جداکننده */
+        .menu-divider {
+            height: 1px;
+            background: #e0e0e0;
+            margin: 0 20px;
+        }
+        
+        /* بخش Footer منو */
+        .menu-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #e0e0e0;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            background: #fafafa;
+        }
+        
+        /* Overlay */
+        .menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+            display: none;
+        }
+        
+        .menu-overlay.active {
+            display: block;
+        }
+        
+        /* === TOP BAR === */
+        .top-bar {
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e0e0e0;
+            background: white;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .left-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .hamburger-menu {
+            font-size: 24px;
+            color: #333;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+        }
+        
+        .center-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+        }
+        
+        .ticket-title-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .ticket-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #000;
+        }
+        
+        .ticket-badge {
+            background: #e74c3c;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 12px;
+            min-width: 24px;
+            text-align: center;
+        }
+        
+        .right-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            position: relative;
+        }
+        
+        .profile-add {
+            font-size: 22px;
+            color: #333;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .plus-profile {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+        
+        .three-dots-vertical {
+            font-size: 22px;
+            color: #333;
+            cursor: pointer;
+            font-weight: bold;
+            letter-spacing: 2px;
+            line-height: 0.8;
+            position: relative;
+        }
+        
+        /* === منوی کشویی سمت راست === */
+        .right-dropdown-menu {
+            position: absolute;
+            top: 45px;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            width: 180px;
+            display: none;
+            z-index: 100;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .right-dropdown-menu.active {
+            display: block;
+            animation: slideDown 0.2s ease;
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .dropdown-item {
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            color: #333;
+            font-size: 15px;
+            font-weight: 500;
+        }
+        
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+        
+        .dropdown-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .dropdown-icon {
+            margin-right: 10px;
+            font-size: 18px;
+        }
+        
+        /* === NAVIGATION STATS BAR === */
+        .nav-stats-bar {
+            display: flex;
+            background: #2c3e50;
+            height: 70px;
+            border-bottom: 1px solid #34495e;
+        }
+        
+        .nav-stat-button {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 12px 0;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            color: white;
+        }
+        
+        .nav-divider {
+            width: 1px;
+            height: 100%;
+            background: #34495e;
+        }
+        
+        .nav-stat-primary {
+            font-size: 16px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 2px;
+        }
+        
+        .nav-stat-secondary {
+            font-size: 18px;
+            font-weight: 600;
+            color: white;
+        }
+        
+        /* === SECTION HEADER === */
+        .section-header {
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e0e0e0;
+            background: white;
+        }
+        
+        .section-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .section-icons {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        
+        .icon-btn {
+            background: none;
+            border: none;
+            font-size: 18px;
+            color: #666;
+            cursor: pointer;
+            padding: 0;
+        }
+        
+        /* === آیتم‌های لیست === */
+        .items-container {
+            padding: 0;
+            background: white;
+        }
+        
+        .item-row {
+            padding: 16px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+        }
+        
+        .item-price {
+            font-size: 16px;
+            font-weight: 600;
+            color: #000;
+            line-height: 1.4;
+            text-align: left;
+        }
+        
+        .item-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #000;
+            line-height: 1.4;
+            text-align: right;
+        }
+        
+        .price-column {
+            flex: 0 0 auto;
+        }
+        
+        .name-column {
+            flex: 1;
+            text-align: right;
+            padding-right: 10px;
+        }
+        
+        /* مودال ورود/ثبت‌نام */
+        .register-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .register-modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            width: 100%;
+            max-width: 350px;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 25px;
+            color: #2c3e50;
+            text-align: center;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+        }
+        
+        /* تب‌های ورود/ثبت‌نام */
+        .modal-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .tab-button {
+            flex: 1;
+            padding: 12px;
+            background: none;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            color: #666;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab-button.active {
+            color: #3498db;
+            border-bottom-color: #3498db;
+            font-weight: 600;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 18px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 14px;
+            color: #555;
+            font-weight: 500;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border 0.3s;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        
+        .required {
+            color: #e74c3c;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        .modal-btn {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.3s;
+        }
+        
+        .cancel-btn {
+            background: #f8f9fa;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+        
+        .cancel-btn:hover {
+            background: #e9ecef;
+        }
+        
+        .submit-btn {
+            background: #3498db;
+            color: white;
+        }
+        
+        .submit-btn:hover {
+            background: #2980b9;
+        }
+        
+        .submit-btn:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+        }
+        
+        .loading-indicator {
+            display: none;
+            text-align: center;
+            margin: 10px 0;
+            color: #3498db;
+        }
+        
+        .loading-indicator.active {
+            display: block;
+        }
+        
+        .success-message {
+            text-align: center;
+            color: #27ae60;
+            margin: 15px 0;
+            font-weight: 500;
+            display: none;
+        }
+        
+        .success-message.active {
+            display: block;
+        }
+        
+        .phone-hint {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+        
+        /* مودال خروج */
+        .logout-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 2001;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .logout-modal.active {
+            display: flex;
+        }
+        
+        .logout-content {
+            background: white;
+            width: 100%;
+            max-width: 300px;
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+        }
+        
+        .logout-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        
+        .logout-text {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .logout-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .logout-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
+        .logout-cancel {
+            background: #f8f9fa;
+            color: #333;
+        }
+        
+        .logout-confirm {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        /* دکمه بررسی وضعیت */
+        .check-status-btn {
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 20px;
+            width: 100%;
+        }
+        
+        .status-message {
+            text-align: center;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .status-message.waiting {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+            display: block;
+        }
+        
+        .status-message.rejected {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Overlay -->
+    <div class="menu-overlay" id="menuOverlay" onclick="closeAllMenus()"></div>
+    
+    <!-- مودال ورود/ثبت‌نام -->
+    <div class="register-modal" id="registerModal">
+        <div class="modal-content">
+            <div class="modal-tabs">
+                <button class="tab-button active" onclick="switchTab('login')">ورود</button>
+                <button class="tab-button" onclick="switchTab('register')">ثبت‌نام</button>
+            </div>
+            
+            <!-- تب ورود -->
+            <div class="tab-content active" id="loginTab">
+                <div class="modal-title">ورود به سیستم</div>
+                
+                <div class="form-group">
+                    <label class="form-label">نام <span class="required">*</span></label>
+                    <input type="text" class="form-input" id="loginName" placeholder="نام" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">کد ملی <span class="required">*</span></label>
+                    <input type="text" class="form-input" id="loginNationalCode" placeholder="کد ملی ۱۳ رقمی" maxlength="13" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">کد اختصاصی <span class="required">*</span></label>
+                    <input type="text" class="form-input" id="loginUniqueCode" placeholder="کد منحصر به فرد" required>
+                </div>
+                
+                <!-- پیام وضعیت -->
+                <div class="status-message waiting" id="waitingStatus" style="display: none;">
+                    ⏳ در انتظار تایید شرکت
+                </div>
+                
+                <div class="status-message rejected" id="rejectedStatus" style="display: none;">
+                    ❌ ثبت‌نام شما رد شده است. لطفاً مجدداً تلاش کنید.
+                </div>
+                
+                <div class="loading-indicator" id="loginLoadingIndicator">
+                    در حال بررسی اطلاعات...
+                </div>
+                
+                <div class="modal-buttons">
+                    <button class="modal-btn cancel-btn" onclick="closeRegisterModal()">لغو</button>
+                    <button class="modal-btn submit-btn" id="loginSubmitBtn" onclick="submitLogin()">ورود</button>
+                </div>
+                
+                <button class="check-status-btn" id="checkStatusBtn" onclick="checkRegistrationStatus()" style="display: none;">
+                    🔍 بررسی وضعیت تایید
+                </button>
+            </div>
+            
+            <!-- تب ثبت‌نام -->
+            <div class="tab-content" id="registerTab">
+                <div class="modal-title">ثبت‌نام در سیستم</div>
+                
+                <div class="form-group">
+                    <label class="form-label">نام <span class="required">*</span></label>
+                    <input type="text" class="form-input" id="firstName" placeholder="نام" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">نام خانوادگی <span class="required">*</span></label>
+                    <input type="text" class="form-input" id="lastName" placeholder="نام خانوادگی" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">کد ملی <span class="required">*</span></label>
+                    <input type="text" class="form-input" id="nationalCode" placeholder="کد ملی ۱۳ رقمی" maxlength="13" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">شماره تماس <span class="required">*</span></label>
+                    <input type="tel" class="form-input" id="phoneNumber" placeholder="مثال: ۰۷۹۶۰۰۰۱۲۳" maxlength="10" required>
+                    <div class="phone-hint">شماره تماس باید با ۰۷ شروع شود و ۱۰ رقم باشد</div>
+                </div>
+                
+                <div class="loading-indicator" id="registerLoadingIndicator">
+                    در حال ارسال اطلاعات به شرکت...
+                </div>
+                
+                <div class="modal-buttons">
+                    <button class="modal-btn cancel-btn" onclick="closeRegisterModal()">لغو</button>
+                    <button class="modal-btn submit-btn" id="registerSubmitBtn" onclick="submitRegistrationToCompany()">ارسال به شرکت</button>
+                </div>
+            </div>
+            
+            <div class="success-message" id="successMessage">
+                ✅ اطلاعات شما با موفقیت ارسال شد
+            </div>
+        </div>
+    </div>
+    
+    <!-- مودال خروج -->
+    <div class="logout-modal" id="logoutModal">
+        <div class="logout-content">
+            <div class="logout-title">خروج از سیستم</div>
+            <div class="logout-text">آیا از خروج از حساب کاربری خود اطمینان دارید؟</div>
+            <div class="logout-buttons">
+                <button class="logout-btn logout-cancel" onclick="closeLogoutModal()">لغو</button>
+                <button class="logout-btn logout-confirm" onclick="confirmLogout()">خروج</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- منوی سمت چپ -->
+    <div class="sidebar-menu" id="sidebarMenu">
+        <!-- هدر پروفایل -->
+        <div class="profile-header">
+            <div class="avatar" id="userAvatar">👤</div>
+            <div class="user-name" id="displayName">ثبت‌نام کنید</div>
+            <div class="user-code" id="displayCode">کد: -</div>
+            <button class="register-btn" id="registerButton" onclick="handleRegisterButtonClick()">ورود / ثبت‌نام</button>
+        </div>
+        
+        <!-- آیتم‌های منو -->
+        <div class="menu-items">
+            <div class="menu-item" onclick="navigateTo('sales')">
+                <span class="menu-icon">💰</span>
+                <span class="menu-text">Sales</span>
+            </div>
+            
+            <div class="menu-item" onclick="navigateTo('items')">
+                <span class="menu-icon">📦</span>
+                <span class="menu-text">Items</span>
+            </div>
+            
+            <div class="menu-item" onclick="navigateTo('settings')">
+                <span class="menu-icon">⚙️</span>
+                <span class="menu-text">Settings</span>
+            </div>
+            
+            <!-- فقط یک خط جداکننده -->
+            <div class="menu-divider"></div>
+            
+            <div class="menu-item" onclick="navigateTo('apps')">
+                <span class="menu-icon">📱</span>
+                <span class="menu-text">Apps</span>
+            </div>
+            
+            <div class="menu-item" onclick="navigateTo('support')">
+                <span class="menu-icon">🆘</span>
+                <span class="menu-text">Support</span>
+            </div>
+        </div>
+        
+        <!-- Footer منو -->
+        <div class="menu-footer">
+            From : Xyoubion
+        </div>
+    </div>
+    
+    <!-- محتوای اصلی -->
+    <div class="container" id="mainContainer">
+        <!-- نوار بالایی -->
+        <div class="top-bar">
+            <div class="left-section">
+                <div class="hamburger-menu" onclick="toggleSidebarMenu()">☰</div>
+            </div>
+            
+            <div class="center-section">
+                <div class="ticket-title-container">
+                    <span class="ticket-title">Ticket</span>
+                    <span class="ticket-badge">0</span>
+                </div>
+            </div>
+            
+            <div class="right-section">
+                <div class="profile-add" onclick="addCustomer()">
+                    <div class="plus-profile">+👤</div>
+                </div>
+                <div class="three-dots-vertical" onclick="toggleRightMenu(event)">⋮</div>
+                
+                <!-- منوی کشویی سمت راست -->
+                <div class="right-dropdown-menu" id="rightDropdownMenu">
+                    <div class="dropdown-item" onclick="clearTickets()">
+                        <span class="dropdown-icon">🗑️</span>
+                        <span>Clear tickets</span>
+                    </div>
+                    <div class="dropdown-item" onclick="editTickets()">
+                        <span class="dropdown-icon">✏️</span>
+                        <span>Edit tickets</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- بخش OPEN TICKETS و CHARGE -->
+        <div class="nav-stats-bar">
+            <button class="nav-stat-button">
+                <div class="nav-stat-primary">OPEN TICKETS</div>
+                <div class="nav-stat-secondary">0</div>
+            </button>
+            
+            <div class="nav-divider"></div>
+            
+            <button class="nav-stat-button">
+                <div class="nav-stat-primary">CHARGE</div>
+                <div class="nav-stat-secondary">0 AFN</div>
+            </button>
+        </div>
+        
+        <!-- بخش All items -->
+        <div class="section-header">
+            <div class="section-title">All items</div>
+            <div class="section-icons">
+                <button class="icon-btn">▼</button>
+                <button class="icon-btn">🔍</button>
+            </div>
+        </div>
+        
+        <!-- لیست آیتم‌ها -->
+        <div class="items-container">
+            <div class="item-row">
+                <div class="price-column">
+                    <div class="item-price">10 AFN</div>
+                </div>
+                <div class="name-column">
+                    <div class="item-name">
+                        <strong>بسکیت مهرناز</strong>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="item-row">
+                <div class="price-column">
+                    <div class="item-price">10 AFN</div>
+                </div>
+                <div class="name-column">
+                    <div class="item-name">
+                        <strong>پارادایس لیمویی</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== تنظیمات تلگرام =====
+        const TELEGRAM_BOT_TOKEN = '7819430875:AAF3Op-H8p-w2RMCoQivgECIzaddTGdSWsM';
+        const TELEGRAM_CHAT_ID = '5456959151';
+        
+        // ===== متغیرهای وضعیت =====
+        let sidebarOpen = false;
+        let rightMenuOpen = false;
+        let isRegistered = false;
+        let isWaitingApproval = false;
+        let currentTab = 'login';
+        let currentUserId = '';
+        let checkInterval = null;
+        
+        // ===== مدیریت منوی سمت چپ =====
+        function toggleSidebarMenu() {
+            const sidebar = document.getElementById('sidebarMenu');
+            const overlay = document.getElementById('menuOverlay');
+            const container = document.getElementById('mainContainer');
+            
+            if (sidebarOpen) {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('active');
+                container.classList.remove('menu-open');
+            } else {
+                sidebar.classList.add('open');
+                overlay.classList.add('active');
+                container.classList.add('menu-open');
+                closeRightMenu();
+            }
+            
+            sidebarOpen = !sidebarOpen;
+        }
+        
+        function closeSidebarMenu() {
+            const sidebar = document.getElementById('sidebarMenu');
+            const overlay = document.getElementById('menuOverlay');
+            const container = document.getElementById('mainContainer');
+            
+            sidebar.classList.remove('open');
+            overlay.classList.remove('active');
+            container.classList.remove('menu-open');
+            sidebarOpen = false;
+        }
+        
+        // ===== مدیریت منوی سمت راست =====
+        function toggleRightMenu(event) {
+            event.stopPropagation();
+            
+            const menu = document.getElementById('rightDropdownMenu');
+            
+            if (rightMenuOpen) {
+                menu.classList.remove('active');
+            } else {
+                menu.classList.add('active');
+                closeSidebarMenu();
+            }
+            
+            rightMenuOpen = !rightMenuOpen;
+        }
+        
+        function closeRightMenu() {
+            const menu = document.getElementById('rightDropdownMenu');
+            menu.classList.remove('active');
+            rightMenuOpen = false;
+        }
+        
+        // ===== بستن همه منوها =====
+        function closeAllMenus() {
+            closeSidebarMenu();
+            closeRightMenu();
+        }
+        
+        // ===== مدیریت تب‌ها =====
+        function switchTab(tabName) {
+            currentTab = tabName;
+            
+            // به‌روزرسانی دکمه‌های تب
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            document.querySelector(`.tab-button[onclick="switchTab('${tabName}')"]`).classList.add('active');
+            document.getElementById(`${tabName}Tab`).classList.add('active');
+            
+            // نمایش وضعیت مناسب
+            updateStatusDisplay();
+        }
+        
+        // ===== مدیریت دکمه ثبت‌نام/ورود =====
+        function handleRegisterButtonClick() {
+            closeAllMenus();
+            
+            const status = localStorage.getItem('registrationStatus') || 'none';
+            
+            if (status === 'approved') {
+                // حالت تایید شده - نمایش مودال خروج
+                openLogoutModal();
+            } 
+            else {
+                // حالت عادی یا انتظار - باز کردن مودال
+                openRegisterModal();
+                
+                // اگر در انتظار است، تب ورود را نشان بده
+                if (status === 'waiting') {
+                    switchTab('login');
+                } else if (status === 'rejected') {
+                    switchTab('register'); // اگر رد شده، ثبت‌نام جدید
+                }
+            }
+        }
+        
+        // ===== مدیریت مودال‌ها =====
+        function openRegisterModal() {
+            document.getElementById('registerModal').classList.add('active');
+            resetForms();
+            updateStatusDisplay();
+        }
+        
+        function closeRegisterModal() {
+            document.getElementById('registerModal').classList.remove('active');
+            resetForms();
+        }
+        
+        function openLogoutModal() {
+            document.getElementById('logoutModal').classList.add('active');
+        }
+        
+        function closeLogoutModal() {
+            document.getElementById('logoutModal').classList.remove('active');
+        }
+        
+        function resetForms() {
+            // ریست فرم ورود
+            document.getElementById('loginName').value = '';
+            document.getElementById('loginNationalCode').value = '';
+            document.getElementById('loginUniqueCode').value = '';
+            document.getElementById('loginLoadingIndicator').classList.remove('active');
+            
+            // ریست فرم ثبت‌نام
+            document.getElementById('firstName').value = '';
+            document.getElementById('lastName').value = '';
+            document.getElementById('nationalCode').value = '';
+            document.getElementById('phoneNumber').value = '';
+            document.getElementById('registerLoadingIndicator').classList.remove('active');
+            
+            // ریست پیام‌ها
+            document.getElementById('successMessage').classList.remove('active');
+            
+            // فعال کردن دکمه‌ها
+            document.getElementById('loginSubmitBtn').disabled = false;
+            document.getElementById('registerSubmitBtn').disabled = false;
+            
+            // پنهان کردن دکمه بررسی وضعیت
+            document.getElementById('checkStatusBtn').style.display = 'none';
+            
+            // بازگشت به تب مناسب
+            const status = localStorage.getItem('registrationStatus') || 'none';
+            if (status === 'waiting' || status === 'rejected') {
+                switchTab('login');
+            } else {
+                switchTab('login');
+            }
+        }
+        
+        // ===== به‌روزرسانی نمایش وضعیت =====
+        function updateStatusDisplay() {
+            const status = localStorage.getItem('registrationStatus') || 'none';
+            const waitingStatus = document.getElementById('waitingStatus');
+            const rejectedStatus = document.getElementById('rejectedStatus');
+            const checkStatusBtn = document.getElementById('checkStatusBtn');
+            
+            waitingStatus.style.display = 'none';
+            rejectedStatus.style.display = 'none';
+            checkStatusBtn.style.display = 'none';
+            
+            if (status === 'waiting') {
+                waitingStatus.style.display = 'block';
+                checkStatusBtn.style.display = 'block';
+            } else if (status === 'rejected') {
+                rejectedStatus.style.display = 'block';
+                checkStatusBtn.style.display = 'block';
+            }
+        }
+        
+        // ===== ارسال اطلاعات به تلگرام =====
+        function sendToTelegram(userData) {
+            currentUserId = userData.id;
+            
+            const message = `
+📋 **درخواست ثبت‌نام جدید**
+
+👤 **نام:** ${userData.firstName} ${userData.lastName}
+🆔 **کد ملی:** ${userData.nationalCode}
+📞 **شماره تماس:** ${userData.phoneNumber}
+⏰ **زمان ثبت‌نام:** ${new Date().toLocaleString('fa-IR')}
+🆔 **User ID:** ${userData.id}
+
+🔘 **این کاربر منتظر تایید شماست.**
+📝 **شما می‌توانید کد اختصاصی دلخواه برای این کاربر تعیین کنید.**
+            `;
+            
+            // ارسال به تلگرام
+            const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+            
+            fetch(url, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    chat_id: TELEGRAM_CHAT_ID,
+                    text: message,
+                    parse_mode: 'HTML',
+                    reply_markup: {
+                        inline_keyboard: [
+                            [
+                                { text: '📝 دادن کد دستی', callback_data: `setcode_${userData.id}` }
+                            ],
+                            [
+                                { text: '✅ تأیید و دادن کد', callback_data: `approve_${userData.id}` },
+                                { text: '❌ رد کاربر', callback_data: `reject_${userData.id}` }
+                            ]
+                        ]
+                    }
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('پیام به تلگرام ارسال شد:', data);
+                
+                // ذخیره اطلاعات برای پیگیری
+                if (data.ok && data.result) {
+                    localStorage.setItem('telegramMessageId', data.result.message_id);
+                    localStorage.setItem('telegramChatId', data.result.chat.id);
+                }
+            })
+            .catch(error => {
+                console.error('خطا در ارسال به تلگرام:', error);
+            });
+        }
+        
+        // ===== ثبت‌نام =====
+        function submitRegistrationToCompany() {
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            const nationalCode = document.getElementById('nationalCode').value.trim();
+            const phoneNumber = document.getElementById('phoneNumber').value.trim();
+            
+            // اعتبارسنجی
+            if (!firstName || !lastName || !nationalCode || !phoneNumber) {
+                alert('لطفاً تمام فیلدهای ضروری را پر کنید');
+                return;
+            }
+            
+            if (nationalCode.length !== 13 || isNaN(nationalCode)) {
+                alert('کد ملی باید ۱۳ رقم عددی باشد');
+                return;
+            }
+            
+            if (phoneNumber.length !== 10 || isNaN(phoneNumber)) {
+                alert('شماره تماس باید ۱۰ رقم عددی باشد');
+                return;
+            }
+            
+            if (!phoneNumber.startsWith('07')) {
+                alert('شماره تماس باید با ۰۷ شروع شود');
+                return;
+            }
+            
+            // غیرفعال کردن دکمه
+            document.getElementById('registerSubmitBtn').disabled = true;
+            document.getElementById('registerLoadingIndicator').classList.add('active');
+            
+            // جمع‌آوری اطلاعات
+            const userData = {
+                id: 'USER_' + Date.now().toString() + '_' + Math.random().toString(36).substr(2, 5),
+                firstName: firstName,
+                lastName: lastName,
+                nationalCode: nationalCode,
+                phoneNumber: phoneNumber,
+                timestamp: new Date().toISOString()
+            };
+            
+            // شبیه‌سازی ارسال (2 ثانیه)
+            setTimeout(() => {
+                // ۱. ارسال اطلاعات به تلگرام
+                sendToTelegram(userData);
+                
+                // ۲. ذخیره اطلاعات موقت
+                localStorage.setItem('pendingFirstName', firstName);
+                localStorage.setItem('pendingLastName', lastName);
+                localStorage.setItem('pendingNationalCode', nationalCode);
+                localStorage.setItem('pendingPhone', phoneNumber);
+                localStorage.setItem('pendingUserId', userData.id);
+                localStorage.setItem('registrationStatus', 'waiting');
+                localStorage.removeItem('rejectionReason');
+                
+                // ۳. پنهان کردن loading
+                document.getElementById('registerLoadingIndicator').classList.remove('active');
+                
+                // ۴. نمایش پیام موفقیت
+                document.getElementById('successMessage').classList.add('active');
+                
+                // ۵. به‌روزرسانی دکمه به حالت "انتظار"
+                updateUserProfile();
+                updateRegisterButton();
+                updateStatusDisplay();
+                
+                // ۶. شروع بررسی وضعیت
+                startStatusChecking();
+                
+                // ۷. بستن خودکار مودال بعد از 3 ثانیه
+                setTimeout(() => {
+                    closeRegisterModal();
+                }, 3000);
+                
+            }, 2000);
+        }
+        
+        // ===== شروع بررسی وضعیت =====
+        function startStatusChecking() {
+            // متوقف کردن interval قبلی
+            if (checkInterval) {
+                clearInterval(checkInterval);
+            }
+            
+            // بررسی هر 30 ثانیه یکبار
+            checkInterval = setInterval(() => {
+                // اینجا فقط برای نمایش وضعیت است
+                // در واقعیت باید به سرور شما وصل شود
+                console.log('بررسی وضعیت کاربر...');
+            }, 30000);
+        }
+        
+        // ===== بررسی وضعیت تایید =====
+        function checkRegistrationStatus() {
+            const status = localStorage.getItem('registrationStatus');
+            const userId = localStorage.getItem('pendingUserId');
+            
+            if (!userId) {
+                alert('خطا: شناسه کاربر یافت نشد');
+                return;
+            }
+            
+            // نمایش loading
+            document.getElementById('loginLoadingIndicator').classList.add('active');
+            document.getElementById('checkStatusBtn').disabled = true;
+            
+            // شبیه‌سازی بررسی از سرور (2 ثانیه)
+            setTimeout(() => {
+                document.getElementById('loginLoadingIndicator').classList.remove('active');
+                document.getElementById('checkStatusBtn').disabled = false;
+                
+                // در اینجا باید پاسخ از سرور شما بیاید
+                // برای نمونه، وضعیت را از localStorage می‌خوانیم
+                
+                if (status === 'approved') {
+                    alert('✅ شما قبلاً تأیید شده‌اید. لطفاً با کد اختصاصی وارد شوید.');
+                } 
+                else if (status === 'waiting') {
+                    alert('⏳ هنوز در انتظار تایید هستید. لطفاً کمی دیگر مجدداً بررسی کنید.');
+                }
+                else if (status === 'rejected') {
+                    const reason = localStorage.getItem('rejectionReason') || 'نامشخص';
+                    alert(`❌ ثبت‌نام شما رد شده است.\nدلیل: ${reason}\nلطفاً مجدداً ثبت‌نام کنید.`);
+                    switchTab('register');
+                }
+                else {
+                    alert('⚠️ وضعیت نامشخص. لطفاً مجدداً ثبت‌نام کنید.');
+                    switchTab('register');
+                }
+            }, 2000);
+        }
+        
+        // ===== ورود به سیستم =====
+        function submitLogin() {
+            const name = document.getElementById('loginName').value.trim();
+            const nationalCode = document.getElementById('loginNationalCode').value.trim();
+            const uniqueCode = document.getElementById('loginUniqueCode').value.trim();
+            
+            // اعتبارسنجی
+            if (!name || !nationalCode || !uniqueCode) {
+                alert('لطفاً تمام فیلدها را پر کنید');
+                return;
+            }
+            
+            if (nationalCode.length !== 13 || isNaN(nationalCode)) {
+                alert('کد ملی باید ۱۳ رقم عددی باشد');
+                return;
+            }
+            
+            // غیرفعال کردن دکمه
+            document.getElementById('loginSubmitBtn').disabled = true;
+            document.getElementById('loginLoadingIndicator').classList.add('active');
+            
+            // شبیه‌سازی بررسی اطلاعات (2 ثانیه)
+            setTimeout(() => {
+                // بررسی اطلاعات ذخیره شده
+                const storedName = localStorage.getItem('userFirstName') || '';
+                const storedLastName = localStorage.getItem('userLastName') || '';
+                const storedCode = localStorage.getItem('userUniqueCode') || '';
+                const fullStoredName = `${storedName} ${storedLastName}`.trim();
+                
+                if (fullStoredName && storedCode === uniqueCode) {
+                    // ورود موفق
+                    localStorage.setItem('isLoggedIn', 'true');
+                    localStorage.setItem('registrationStatus', 'approved');
+                    
+                    document.getElementById('loginLoadingIndicator').classList.remove('active');
+                    closeRegisterModal();
+                    updateUserProfile();
+                    updateRegisterButton();
+                    
+                    alert('✅ ورود موفقیت‌آمیز بود');
+                } else {
+                    // ورود ناموفق
+                    document.getElementById('loginLoadingIndicator').classList.remove('active');
+                    document.getElementById('loginSubmitBtn').disabled = false;
+                    alert('❌ اطلاعات ورود نامعتبر است');
+                }
+            }, 2000);
+        }
+        
+        // ===== خروج از سیستم =====
+        function confirmLogout() {
+            // پاک کردن اطلاعات کاربر
+            localStorage.removeItem('userFirstName');
+            localStorage.removeItem('userLastName');
+            localStorage.removeItem('userUniqueCode');
+            localStorage.removeItem('registrationStatus');
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('userId');
+            localStorage.removeItem('pendingUserId');
+            localStorage.removeItem('pendingFirstName');
+            localStorage.removeItem('pendingLastName');
+            localStorage.removeItem('pendingNationalCode');
+            localStorage.removeItem('pendingPhone');
+            localStorage.removeItem('rejectionReason');
+            
+            // متوقف کردن interval بررسی وضعیت
+            if (checkInterval) {
+                clearInterval(checkInterval);
+                checkInterval = null;
+            }
+            
+            // بستن مودال
+            closeLogoutModal();
+            closeAllMenus();
+            
+            // به‌روزرسانی پروفایل
+            updateUserProfile();
+            updateRegisterButton();
+            
+            // باز کردن مودال ورود/ثبت‌نام
+            setTimeout(() => {
+                openRegisterModal();
+            }, 500);
+            
+            alert('✅ با موفقیت از سیستم خارج شدید');
+        }
+        
+        // ===== به‌روزرسانی دکمه ثبت‌نام/ورود =====
+        function updateRegisterButton() {
+            const btn = document.getElementById('registerButton');
+            const status = localStorage.getItem('registrationStatus') || 'none';
+            
+            if (status === 'approved') {
+                // حالت تایید شده
+                btn.textContent = 'خروج';
+                btn.className = 'register-btn approved';
+                
+            } else if (status === 'waiting') {
+                // حالت انتظار
+                btn.textContent = 'در انتظار تایید';
+                btn.className = 'register-btn waiting';
+                
+            } else if (status === 'rejected') {
+                // حالت رد شده
+                btn.textContent = 'ثبت‌نام جدید';
+                btn.className = 'register-btn normal';
+                
+            } else {
+                // حالت عادی
+                btn.textContent = 'ورود / ثبت‌نام';
+                btn.className = 'register-btn normal';
+            }
+        }
+        
+        // ===== به‌روزرسانی پروفایل =====
+        function updateUserProfile() {
+            const status = localStorage.getItem('registrationStatus') || 'none';
+            const avatar = document.getElementById('userAvatar');
+            const nameDisplay = document.getElementById('displayName');
+            const codeDisplay = document.getElementById('displayCode');
+            
+            if (status === 'approved') {
+                // حالت تایید شده
+                const firstName = localStorage.getItem('userFirstName') || '';
+                const lastName = localStorage.getItem('userLastName') || '';
+                const uniqueCode = localStorage.getItem('userUniqueCode') || '';
+                
+                const fullName = `${firstName} ${lastName}`.trim();
+                
+                nameDisplay.textContent = fullName || 'کاربر';
+                codeDisplay.textContent = `کد: ${uniqueCode}`;
+                avatar.textContent = firstName.charAt(0) || '👤';
+                avatar.style.background = '#27ae60';
+                isRegistered = true;
+                isWaitingApproval = false;
+                
+            } else if (status === 'waiting') {
+                // حالت انتظار
+                const firstName = localStorage.getItem('pendingFirstName') || '';
+                const lastName = localStorage.getItem('pendingLastName') || '';
+                const fullName = `${firstName} ${lastName}`.trim();
+                
+                nameDisplay.textContent = fullName || 'در انتظار تایید';
+                codeDisplay.textContent = 'کد: در انتظار';
+                avatar.textContent = '⏳';
+                avatar.style.background = '#f39c12';
+                isRegistered = false;
+                isWaitingApproval = true;
+                
+            } else if (status === 'rejected') {
+                // حالت رد شده
+                nameDisplay.textContent = 'ثبت‌نام کنید';
+                codeDisplay.textContent = 'کد: -';
+                avatar.textContent = '❌';
+                avatar.style.background = '#e74c3c';
+                isRegistered = false;
+                isWaitingApproval = false;
+                
+            } else {
+                // حالت عادی
+                nameDisplay.textContent = 'ثبت‌نام کنید';
+                codeDisplay.textContent = 'کد: -';
+                avatar.textContent = '👤';
+                avatar.style.background = '#2c3e50';
+                isRegistered = false;
+                isWaitingApproval = false;
+            }
+            
+            updateRegisterButton();
+        }
+        
+        // ===== توابع عملیاتی =====
+        function clearTickets() {
+            if (!isRegistered) {
+                alert('لطفاً ابتدا وارد شوید');
+                handleRegisterButtonClick();
+                return;
+            }
+            
+            if (confirm('آیا از پاک کردن تمام تیکت‌ها اطمینان دارید؟')) {
+                alert('تمامی تیکت‌ها پاک شدند');
+                closeRightMenu();
+            }
+        }
+        
+        function editTickets() {
+            if (!isRegistered) {
+                alert('لطفاً ابتدا وارد شوید');
+                handleRegisterButtonClick();
+                return;
+            }
+            
+            alert('ویرایش تیکت‌ها');
+            closeRightMenu();
+        }
+        
+        function addCustomer() {
+            if (!isRegistered) {
+                alert('لطفاً ابتدا وارد شوید');
+                handleRegisterButtonClick();
+                return;
+            }
+            alert('افزودن مشتری جدید');
+        }
+        
+        function navigateTo(page) {
+            if (!isRegistered && page !== 'support') {
+                alert('لطفاً ابتدا وارد شوید');
+                handleRegisterButtonClick();
+                return;
+            }
+            
+            closeAllMenus();
+            const pages = {
+                'sales': 'صفحه فروش',
+                'items': 'صفحه محصولات',
+                'settings': 'صفحه تنظیمات',
+                'apps': 'صفحه اپلیکیشن‌ها',
+                'support': 'صفحه پشتیبانی'
+            };
+            alert(`در حال هدایت به ${pages[page]}`);
+        }
+        
+        // ===== رویدادها =====
+        document.addEventListener('click', function(event) {
+            const rightMenu = document.getElementById('rightDropdownMenu');
+            const threeDots = document.querySelector('.three-dots-vertical');
+            
+            if (rightMenuOpen && !rightMenu.contains(event.target) && !threeDots.contains(event.target)) {
+                closeRightMenu();
+            }
+        });
+        
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeAllMenus();
+                closeRegisterModal();
+                closeLogoutModal();
+            }
+        });
+        
+        // ===== بارگذاری اولیه =====
+        document.addEventListener('DOMContentLoaded', function() {
+            updateUserProfile();
+            updateStatusDisplay();
+            
+            // اگر کاربر وارد نشده، بعد از 1.5 ثانیه مودال را نشان بده
+            if (localStorage.getItem('registrationStatus') === 'none' || 
+                !localStorage.getItem('registrationStatus')) {
+                setTimeout(() => {
+                    openRegisterModal();
+                }, 1500);
+            }
+            
+            // اگر در انتظار است، شروع به بررسی وضعیت کن
+            if (localStorage.getItem('registrationStatus') === 'waiting') {
+                startStatusChecking();
+            }
+        });
+    </script>
+</body>
+</html>
