@@ -1,5 +1,5 @@
 // supabase-config.js
 export const SUPABASE_CONFIG = {
-  URL: "https://xxxxxxxx.supabase.co",
-  KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-};
+  URL: "https://eqkkvyzxjbeztrgqobxo.supabase.co",
+  KEY: "sb_secret_bfhqRufhcBHsLeDguL-AUQ_uBzLkUSo"
+};0
