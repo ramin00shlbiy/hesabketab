@@ -1,4 +1,4 @@
-// netlify/functions/telegram-webhook.js
+۳// netlify/functions/telegram-webhook.js
 const { createClient } = require('@supabase/supabase-js');
 
 // دریافت تنظیمات از environment variables
