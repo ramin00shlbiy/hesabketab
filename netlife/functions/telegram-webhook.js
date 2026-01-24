@@ -1,32 +1,22 @@
-// netlify/functions/telegram-webhook.js
 const { createClient } = require('@supabase/supabase-js');
 
-// دریافت تنظیمات از environment variables
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.VITE_SUPABASE_SERVICE_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-
 exports.handler = async (event, context) => {
-    console.log('📨 Webhook called');
-    
     try {
-        const body = JSON.parse(event.body || '{}');
+        // گرفتن مقادیر از Environment Variables
+        const supabaseUrl = process.env.VITE_SUPABASE_URL;
+        const supabaseServiceKey = process.env.VITE_SUPABASE_SERVICE_KEY;
+        const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
         
-        // اگر callback query از دکمه‌ها
-        if (body.callback_query) {
-            await handleCallbackQuery(body.callback_query);
+        if (!supabaseUrl || !supabaseServiceKey || !telegramToken) {
+            console.error('Missing environment variables');
+            return {
+                statusCode: 500,
+                body: JSON.stringify({ error: 'Server configuration error' })
+            };
         }
         
-        // اگر پیام متنی برای کد دستی
-        if (body.message && body.message.text) {
-            await handleTextMessage(body.message);
-        }
-        
-        return {
-            statusCode: 200,
-            body: JSON.stringify({ success: true })
+        const supabase = createClient(supabaseUrl, supabaseServiceKey);
+        const body = JSON.parse(event.body)
         };
         
     } catch (error) {
