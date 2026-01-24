@@ -1,12 +1,4 @@
-// netlify/functions/send-to-telegram.js
 const { createClient } = require('@supabase/supabase-js');
-
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
 exports.handler = async (event, context) => {
     // CORS headers
@@ -16,42 +8,41 @@ exports.handler = async (event, context) => {
         'Access-Control-Allow-Methods': 'POST, OPTIONS'
     };
     
-    // Handle preflight
     if (event.httpMethod === 'OPTIONS') {
         return { statusCode: 200, headers, body: '' };
     }
     
     try {
+        // گرفتن مقادیر از Environment Variables
+        const supabaseUrl = process.env.VITE_SUPABASE_URL;
+        const supabaseServiceKey = process.env.VITE_SUPABASE_SERVICE_KEY;
+        const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
+        const telegramChatId = process.env.TELEGRAM_CHAT_ID;
+        
+        // اعتبارسنجی متغیرهای محیطی
+        if (!supabaseUrl || !supabaseServiceKey || !telegramToken || !telegramChatId) {
+            console.error('Missing environment variables');
+            return {
+                statusCode: 500,
+                headers,
+                body: JSON.stringify({ 
+                    success: false, 
+                    error: 'Server configuration error' 
+                })
+            };
+        }
+        
+        const supabase = createClient(supabaseUrl, supabaseServiceKey);
         const userData = JSON.parse(event.body);
-        console.log('📤 Registering user:', userData);
         
-        // اعتبارسنجی داده‌ها
+        // اعتبارسنجی داده‌های ورودی
         if (!userData.firstName || !userData.lastName || !userData.nationalCode || !userData.phoneNumber) {
-            throw new Error('Missing required fields');
-        }
-        
-        if (userData.nationalCode.length !== 13 || isNaN(userData.nationalCode)) {
-            throw new Error('Invalid national code');
-        }
-        
-        if (userData.phoneNumber.length !== 10 || isNaN(userData.phoneNumber)) {
-            throw new Error('Invalid phone number');
-        }
-        
-        // بررسی تکراری نبودن شماره موبایل
-        const { data: existingUser } = await supabase
-            .from('Users')
-            .select('id')
-            .eq('mobile', userData.phoneNumber)
-            .single();
-        
-        if (existingUser) {
             return {
                 statusCode: 400,
                 headers,
                 body: JSON.stringify({ 
                     success: false, 
-                    error: 'این شماره موبایل قبلاً ثبت شده است' 
+                    error: 'All fields are required' 
                 })
             };
         }
@@ -70,67 +61,37 @@ exports.handler = async (event, context) => {
             .select()
             .single();
         
-        if (error) throw error;
-        
-        console.log('✅ User saved to Supabase:', user.id);
+        if (error) {
+            console.error('Supabase error:', error);
+            throw error;
+        }
         
         // ارسال به تلگرام
-        const telegramResult = await sendToTelegram(user);
-        
-        return {
-            statusCode: 200,
-            headers,
-            body: JSON.stringify({ 
-                success: true, 
-                userId: user.id,
-                message: 'درخواست شما ارسال شد. منتظر تأیید ادمین باشید.',
-                telegramMessageId: telegramResult?.result?.message_id
-            })
-        };
-        
-    } catch (error) {
-        console.error('❌ Error in send-to-telegram:', error);
-        
-        return {
-            statusCode: 500,
-            headers,
-            body: JSON.stringify({ 
-                success: false, 
-                error: error.message 
-            })
-        };
-    }
-};
-
-// ارسال نوتیفیکیشن به تلگرام
-async function sendToTelegram(user) {
-    const message = `
+        const message = `
 📋 **درخواست ثبت‌نام جدید**
 
-👤 **نام:** ${user.first_name} ${user.last_name}
-🆔 **کد ملی:** ${user.national_code}
-📞 **شماره تماس:** ${user.mobile}
-⏰ **زمان ثبت‌نام:** ${new Date().toLocaleString('fa-IR')}
+👤 **نام:** ${userData.firstName} ${userData.lastName}
+🆔 **کد ملی:** ${userData.nationalCode}
+📞 **شماره تماس:** ${userData.phoneNumber}
+⏰ **زمان:** ${new Date().toLocaleString('fa-IR')}
 🆔 **User ID:** ${user.id}
 
-لطفا یکی از گزینه‌ها را انتخاب کنید:
-    `;
-    
-    const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
-    
-    try {
-        const response = await fetch(url, {
+لطفا اقدام کنید:`;
+        
+        const telegramUrl = `https://api.telegram.org/bot${telegramToken}/sendMessage`;
+        
+        const telegramResponse = await fetch(telegramUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                chat_id: TELEGRAM_CHAT_ID,
+                chat_id: telegramChatId,
                 text: message,
                 parse_mode: 'HTML',
                 reply_markup: {
                     inline_keyboard: [
                         [
                             { 
-                                text: '✅ تأیید کاربر', 
+                                text: '✅ تأیید (کد خودکار)', 
                                 callback_data: `approve_${user.id}` 
                             },
                             { 
@@ -140,7 +101,7 @@ async function sendToTelegram(user) {
                         ],
                         [
                             { 
-                                text: '🔑 دادن کد اختصاصی', 
+                                text: '🔑 دادن کد دستی', 
                                 callback_data: `setcode_${user.id}` 
                             }
                         ]
@@ -149,21 +110,35 @@ async function sendToTelegram(user) {
             })
         });
         
-        const result = await response.json();
-        console.log('📨 Telegram response:', result.ok ? 'Sent' : 'Failed');
+        const telegramResult = await telegramResponse.json();
         
-        // ذخیره message_id در Supabase
-        if (result.ok) {
+        // ذخیره message_id برای ویرایش بعدی
+        if (telegramResult.ok) {
             await supabase
                 .from('Users')
-                .update({ telegram_message_id: result.result.message_id })
+                .update({ telegram_message_id: telegramResult.result.message_id })
                 .eq('id', user.id);
         }
         
-        return result;
+        return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({ 
+                success: true, 
+                userId: user.id,
+                message: 'درخواست ارسال شد' 
+            })
+        };
         
     } catch (error) {
-        console.error('Telegram send error:', error);
-        return null;
+        console.error('Error in send-to-telegram:', error);
+        return {
+            statusCode: 500,
+            headers,
+            body: JSON.stringify({ 
+                success: false, 
+                error: 'Internal server error' 
+            })
+        };
     }
-}
+};
