@@ -740,7 +740,7 @@
                 
                 <div class="form-group">
                     <label class="form-label">کد ملی <span class="required">*</span></label>
-                    <input type="text" class="form-input" id="loginNationalCode" placeholder="کد ملی ۱۳ رقمی" maxlength="13" required>
+                    <input type="text" class="form-input" id="loginNationalCode" placeholder="کد ملی ۱۰ رقمی" maxlength="10" required>
                 </div>
                 
                 <div class="form-group">
@@ -787,13 +787,13 @@
                 
                 <div class="form-group">
                     <label class="form-label">کد ملی <span class="required">*</span></label>
-                    <input type="text" class="form-input" id="nationalCode" placeholder="کد ملی ۱۳ رقمی" maxlength="13" required>
+                    <input type="text" class="form-input" id="nationalCode" placeholder="کد ملی ۱۰ رقمی" maxlength="10" required>
                 </div>
                 
                 <div class="form-group">
                     <label class="form-label">شماره تماس <span class="required">*</span></label>
-                    <input type="tel" class="form-input" id="phoneNumber" placeholder="مثال: ۰۷۹۶۰۰۰۱۲۳" maxlength="10" required>
-                    <div class="phone-hint">شماره تماس باید با ۰۷ شروع شود و ۱۰ رقم باشد</div>
+                    <input type="tel" class="form-input" id="phoneNumber" placeholder="مثال: ۰۹۱۲۳۴۵۶۷۸۹" maxlength="11" required>
+                    <div class="phone-hint">شماره تماس باید با ۰ شروع شود و ۱۱ رقم باشد</div>
                 </div>
                 
                 <div class="loading-indicator" id="registerLoadingIndicator">
@@ -957,16 +957,11 @@
     </div>
 
     <script>
-        // ===== تنظیمات =====
-        const TELEGRAM_BOT_TOKEN = '7819430875:AAF3Op-H8p-w2RMCoQivgECIzaddTGdSWsM';
-        const TELEGRAM_CHAT_ID = '5456959151';
-        
         // ===== متغیرهای وضعیت =====
         let sidebarOpen = false;
         let rightMenuOpen = false;
         let currentTab = 'login';
         let pollingInterval = null;
-        let currentUserId = null;
         
         // ===== مدیریت منوی سمت چپ =====
         function toggleSidebarMenu() {
@@ -1136,13 +1131,6 @@
             }
         }
         
-        // ===== تولید کد اختصاصی =====
-        function generateUniqueCode() {
-            const prefix = 'AYB';
-            const number = Math.floor(Math.random() * 9000) + 1000;
-            return `${prefix}${number}`;
-        }
-        
         // ===== ثبت‌نام جدید =====
         async function submitRegistration() {
             const firstName = document.getElementById('firstName').value.trim();
@@ -1156,18 +1144,18 @@
                 return;
             }
             
-            if (nationalCode.length !== 13 || isNaN(nationalCode)) {
-                alert('کد ملی باید ۱۳ رقم عددی باشد');
+            if (nationalCode.length !== 10 || isNaN(nationalCode)) {
+                alert('کد ملی باید ۱۰ رقم عددی باشد');
                 return;
             }
             
-            if (phoneNumber.length !== 10 || isNaN(phoneNumber)) {
-                alert('شماره تماس باید ۱۰ رقم عددی باشد');
+            if (phoneNumber.length !== 11 || isNaN(phoneNumber.slice(1))) {
+                alert('شماره تماس باید ۱۱ رقم باشد (شامل ۰ اول)');
                 return;
             }
             
-            if (!phoneNumber.startsWith('07')) {
-                alert('شماره تماس باید با ۰۷ شروع شود');
+            if (!phoneNumber.startsWith('0')) {
+                alert('شماره تماس باید با ۰ شروع شود');
                 return;
             }
             
@@ -1176,20 +1164,46 @@
             document.getElementById('registerLoadingIndicator').classList.add('active');
             
             try {
-                // تولید کد اختصاصی
-                const uniqueCode = generateUniqueCode();
+                // پاک‌سازی کاراکترهای غیرمجاز
+                const cleanFirstName = firstName.replace(/[^\u0600-\u06FF\uFB8A\u067E\u0686\u06AF\u200c\u200f\s]/g, '');
+                const cleanLastName = lastName.replace(/[^\u0600-\u06FF\uFB8A\u067E\u0686\u06AF\u200c\u200f\s]/g, '');
+                
+                // ایجاد داده کاربر
+                const userData = {
+                    firstName: cleanFirstName,
+                    lastName: cleanLastName,
+                    nationalCode: nationalCode,
+                    phoneNumber: phoneNumber
+                };
+                
+                console.log('ارسال داده به سرور:', userData);
                 
                 // ارسال به Netlify Function
                 const response = await fetch('/.netlify/functions/send-to-telegram', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        firstName: firstName,
-                        lastName: lastName,
-                        nationalCode: nationalCode,
-                        phoneNumber: phoneNumber
-                    })
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(userData)
                 });
+                
+                // بررسی پاسخ
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('خطای سرور:', response.status, errorText);
+                    
+                    let errorMessage = 'خطا در ارتباط با سرور';
+                    try {
+                        const errorData = JSON.parse(errorText);
+                        errorMessage = errorData.error || errorMessage;
+                    } catch (e) {
+                        // اگر JSON نبود، متن خطا را نشان بده
+                        errorMessage = errorText || errorMessage;
+                    }
+                    
+                    throw new Error(errorMessage);
+                }
                 
                 const result = await response.json();
                 
@@ -1198,13 +1212,12 @@
                 }
                 
                 // ذخیره اطلاعات موقت
-                localStorage.setItem('pendingFirstName', firstName);
-                localStorage.setItem('pendingLastName', lastName);
+                localStorage.setItem('pendingFirstName', cleanFirstName);
+                localStorage.setItem('pendingLastName', cleanLastName);
                 localStorage.setItem('pendingNationalCode', nationalCode);
                 localStorage.setItem('pendingPhone', phoneNumber);
                 localStorage.setItem('userId', result.userId);
                 localStorage.setItem('registrationStatus', 'waiting');
-                currentUserId = result.userId;
                 
                 // نمایش موفقیت
                 document.getElementById('registerLoadingIndicator').classList.remove('active');
@@ -1228,7 +1241,7 @@
                 console.error('خطا در ثبت‌نام:', error);
                 document.getElementById('registerLoadingIndicator').classList.remove('active');
                 submitBtn.disabled = false;
-                alert('❌ خطا در ثبت‌نام: ' + error.message);
+                alert(`❌ خطا در ثبت‌نام: ${error.message}`);
             }
         }
         
@@ -1245,6 +1258,12 @@
                 
                 try {
                     const response = await fetch(`/.netlify/functions/check-user-status?userId=${userId}`);
+                    
+                    if (!response.ok) {
+                        console.error('خطا در polling:', response.status);
+                        return;
+                    }
+                    
                     const data = await response.json();
                     
                     if (data.status === 'approved') {
@@ -1309,6 +1328,11 @@
             
             try {
                 const response = await fetch(`/.netlify/functions/check-user-status?userId=${userId}`);
+                
+                if (!response.ok) {
+                    throw new Error('خطا در ارتباط با سرور');
+                }
+                
                 const data = await response.json();
                 
                 if (data.status === 'approved') {
@@ -1337,7 +1361,7 @@
                 }
                 
             } catch (error) {
-                alert('خطا در بررسی وضعیت');
+                alert('خطا در بررسی وضعیت: ' + error.message);
             } finally {
                 setTimeout(() => {
                     checkBtn.disabled = false;
@@ -1356,8 +1380,8 @@
                 return;
             }
             
-            if (nationalCode.length !== 13 || isNaN(nationalCode)) {
-                alert('کد ملی باید ۱۳ رقم عددی باشد');
+            if (nationalCode.length !== 10 || isNaN(nationalCode)) {
+                alert('کد ملی باید ۱۰ رقم عددی باشد');
                 return;
             }
             
@@ -1371,7 +1395,7 @@
             document.getElementById('loginLoadingIndicator').classList.add('active');
             
             try {
-                // در حالت واقعی باید به Supabase وصل شوید و تأیید کنید
+                // در حالت واقعی اینجا باید به سرور وصل شود
                 const storedUniqueCode = localStorage.getItem('userUniqueCode');
                 const storedNationalCode = localStorage.getItem('pendingNationalCode') || '';
                 const status = localStorage.getItem('registrationStatus');
@@ -1387,8 +1411,6 @@
                     alert('✅ ورود موفقیت‌آمیز بود');
                 } else if (status === 'waiting') {
                     alert('⏳ ثبت‌نام شما هنوز تأیید نشده است. منتظر باشید.');
-                    document.getElementById('loginLoadingIndicator').classList.remove('active');
-                    loginBtn.disabled = false;
                 } else {
                     throw new Error('کد اختصاصی یا کد ملی نامعتبر است');
                 }
@@ -1414,8 +1436,6 @@
             localStorage.removeItem('pendingLastName');
             localStorage.removeItem('pendingNationalCode');
             localStorage.removeItem('pendingPhone');
-            localStorage.removeItem('pendingUniqueCode');
-            localStorage.removeItem('pendingTimestamp');
             
             // توقف polling
             if (pollingInterval) {
@@ -1616,7 +1636,6 @@
                 closeLogoutModal();
             }
         });
-        
         // ===== بارگذاری اولیه =====
         document.addEventListener('DOMContentLoaded', function() {
             updateUserProfile();
@@ -1644,4 +1663,18 @@
         });
     </script>
 </body>
-        </html>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    
