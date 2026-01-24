@@ -1,0 +1,6 @@
+# فایل‌های حاوی کلیدها را ignore کن
+supabase-config.js
+.env
+.env.local
+.env.*
+*.env
