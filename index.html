@@ -1132,117 +1132,119 @@
         }
         
         // ===== ثبت‌نام جدید =====
-        async function submitRegistration() {
-            const firstName = document.getElementById('firstName').value.trim();
-            const lastName = document.getElementById('lastName').value.trim();
-            const nationalCode = document.getElementById('nationalCode').value.trim();
-            const phoneNumber = document.getElementById('phoneNumber').value.trim();
+        async function submitRegistration() {        
+             const firstName = document.getElementById('firstName').value.trim();
+             const lastName = document.getElementById('lastName').value.trim();
+             const nationalCode = document.getElementById('nationalCode').value.trim();
+             const phoneNumber = document.getElementById('phoneNumber').value.trim();
+    
+      // اعتبارسنجی
+      if (!firstName || !lastName || !nationalCode || !phoneNumber) {
+        alert('لطفاً تمام فیلدهای ضروری را پر کنید');
+        return;
+    }
+    
+    if (nationalCode.length !== 10 || isNaN(nationalCode)) {
+        alert('کد ملی باید ۱۰ رقم عددی باشد');
+        return;
+    }
+    
+    if (phoneNumber.length !== 11 || isNaN(phoneNumber.slice(1))) {
+        alert('شماره تماس باید ۱۱ رقم باشد (شامل ۰ اول)');
+        return;
+    }
+    
+    if (!phoneNumber.startsWith('0')) {
+        alert('شماره تماس باید با ۰ شروع شود');
+        return;
+    }
+    
+    const submitBtn = document.getElementById('registerSubmitBtn');
+    submitBtn.disabled = true;
+    document.getElementById('registerLoadingIndicator').classList.add('active');
+    
+    try {
+        // پاک‌سازی کاراکترهای غیرمجاز
+        const cleanFirstName = firstName.replace(/[^\u0600-\u06FF\uFB8A\u067E\u0686\u06AF\u200c\u200f\s]/g, '');
+        const cleanLastName = lastName.replace(/[^\u0600-\u06FF\uFB8A\u067E\u0686\u06AF\u200c\u200f\s]/g, '');
+        
+        // ایجاد داده کاربر
+        const userData = {
+            firstName: cleanFirstName,
+            lastName: cleanLastName,
+            nationalCode: nationalCode,
+            phoneNumber: phoneNumber
+        };
+        
+        console.log('📤 ارسال داده به سرور:', userData);
+        
+        // 🔴 اصلاح مهم: استفاده از آدرس صحیح Netlify Function
+        const response = await fetch('/.netlify/functions/send-to-telegram', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(userData)
+        });
+        
+        console.log('📥 وضعیت پاسخ سرور:', response.status, response.statusText);
+        
+        // بررسی وضعیت پاسخ
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ متن خطای سرور:', errorText);
             
-            // اعتبارسنجی
-            if (!firstName || !lastName || !nationalCode || !phoneNumber) {
-                alert('لطفاً تمام فیلدهای ضروری را پر کنید');
-                return;
-            }
-            
-            if (nationalCode.length !== 10 || isNaN(nationalCode)) {
-                alert('کد ملی باید ۱۰ رقم عددی باشد');
-                return;
-            }
-            
-            if (phoneNumber.length !== 11 || isNaN(phoneNumber.slice(1))) {
-                alert('شماره تماس باید ۱۱ رقم باشد (شامل ۰ اول)');
-                return;
-            }
-            
-            if (!phoneNumber.startsWith('0')) {
-                alert('شماره تماس باید با ۰ شروع شود');
-                return;
-            }
-            
-            const submitBtn = document.getElementById('registerSubmitBtn');
-            submitBtn.disabled = true;
-            document.getElementById('registerLoadingIndicator').classList.add('active');
-            
+            let errorMessage = 'خطا در ارتباط با سرور';
             try {
-                // پاک‌سازی کاراکترهای غیرمجاز
-                const cleanFirstName = firstName.replace(/[^\u0600-\u06FF\uFB8A\u067E\u0686\u06AF\u200c\u200f\s]/g, '');
-                const cleanLastName = lastName.replace(/[^\u0600-\u06FF\uFB8A\u067E\u0686\u06AF\u200c\u200f\s]/g, '');
-                
-                // ایجاد داده کاربر
-                const userData = {
-                    firstName: cleanFirstName,
-                    lastName: cleanLastName,
-                    nationalCode: nationalCode,
-                    phoneNumber: phoneNumber
-                };
-                
-                console.log('ارسال داده به سرور:', userData);
-                
-                // ارسال به Netlify Function
-                const response = await fetch('/.netlify/functions/send-to-telegram', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify(userData)
-                });
-                
-                // بررسی پاسخ
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('خطای سرور:', response.status, errorText);
-                    
-                    let errorMessage = 'خطا در ارتباط با سرور';
-                    try {
-                        const errorData = JSON.parse(errorText);
-                        errorMessage = errorData.error || errorMessage;
-                    } catch (e) {
-                        // اگر JSON نبود، متن خطا را نشان بده
-                        errorMessage = errorText || errorMessage;
-                    }
-                    
-                    throw new Error(errorMessage);
-                }
-                
-                const result = await response.json();
-                
-                if (!result.success) {
-                    throw new Error(result.error || 'خطا در ارسال اطلاعات');
-                }
-                
-                // ذخیره اطلاعات موقت
-                localStorage.setItem('pendingFirstName', cleanFirstName);
-                localStorage.setItem('pendingLastName', cleanLastName);
-                localStorage.setItem('pendingNationalCode', nationalCode);
-                localStorage.setItem('pendingPhone', phoneNumber);
-                localStorage.setItem('userId', result.userId);
-                localStorage.setItem('registrationStatus', 'waiting');
-                
-                // نمایش موفقیت
-                document.getElementById('registerLoadingIndicator').classList.remove('active');
-                document.getElementById('successMessage').classList.add('active');
-                
-                // به‌روزرسانی UI
-                updateUserProfile();
-                updateRegisterButton();
-                updateStatusDisplay();
-                
-                // شروع polling
-                startPolling();
-                
-                // بستن خودکار مودال بعد از 3 ثانیه
-                setTimeout(() => {
-                    closeRegisterModal();
-                    alert('✅ ثبت‌نام شما با موفقیت انجام شد\n⏳ منتظر تأیید ادمین باشید.');
-                }, 3000);
-                
-            } catch (error) {
-                console.error('خطا در ثبت‌نام:', error);
-                document.getElementById('registerLoadingIndicator').classList.remove('active');
-                submitBtn.disabled = false;
-                alert(`❌ خطا در ثبت‌نام: ${error.message}`);
+                const errorData = JSON.parse(errorText);
+                errorMessage = errorData.error || errorMessage;
+            } catch (e) {
+                errorMessage = errorText || errorMessage;
             }
+            
+            throw new Error(errorMessage);
+        }
+        
+        const result = await response.json();
+        console.log('✅ نتیجه از سرور:', result);
+        
+        if (!result.success) {
+            throw new Error(result.error || 'خطا در ارسال اطلاعات');
+        }
+        
+        // ذخیره اطلاعات موقت
+        localStorage.setItem('pendingFirstName', cleanFirstName);
+        localStorage.setItem('pendingLastName', cleanLastName);
+        localStorage.setItem('pendingNationalCode', nationalCode);
+        localStorage.setItem('pendingPhone', phoneNumber);
+        localStorage.setItem('userId', result.userId);
+        localStorage.setItem('registrationStatus', 'waiting');
+        
+        // نمایش موفقیت
+        document.getElementById('registerLoadingIndicator').classList.remove('active');
+        document.getElementById('successMessage').classList.add('active');
+        
+        // به‌روزرسانی UI
+        updateUserProfile();
+        updateRegisterButton();
+        updateStatusDisplay();
+        
+        // شروع polling
+        startPolling();
+        
+        // بستن خودکار مودال بعد از 3 ثانیه
+        setTimeout(() => {
+            closeRegisterModal();
+            alert('✅ ثبت‌نام شما با موفقیت انجام شد\n⏳ منتظر تأیید ادمین باشید.');
+        }, 3000);
+        
+    } catch (error) {
+        console.error('❌ خطا در ثبت‌نام:', error);
+        document.getElementById('registerLoadingIndicator').classList.remove('active');
+        submitBtn.disabled = false;
+        alert(`❌ خطا در ثبت‌نام: ${error.message}`);
+    }
         }
         
         // ===== شروع Polling =====
