@@ -6,12 +6,9 @@
   "scripts": {
     "build": "echo 'No build needed'",
     "dev": "echo 'Run on Netlify'"
-  },
+  {
   "dependencies": {
-    "@supabase/supabase-js": "^2.39.7"
-  },
-  "devDependencies": {},
-  "engines": {
-    "node": ">=18.0.0"
+    "@supabase/supabase-js": "^2.39.7",
+    "node-fetch": "^2.6.9"
   }
-}
+  
