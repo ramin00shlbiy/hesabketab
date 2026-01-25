@@ -1,8 +1,9 @@
 // netlify/functions/send-to-telegram.js
 const { createClient } = require('@supabase/supabase-js');
+const fetch = require('node-fetch'); // 🔴 این خط را اضافه کنید!
 
 exports.handler = async (event, context) => {
-    console.log('📨 درخواست ثبت‌نام دریافت شد');
+    console.log('📨 دریافت درخواست ثبت‌نام');
     
     // CORS headers
     const headers = {
@@ -59,16 +60,16 @@ exports.handler = async (event, context) => {
             };
         }
         
-        // گرفتن Environment Variables از Netlify
+        // گرفتن Environment Variables
         const supabaseUrl = process.env.VITE_SUPABASE_URL;
         const supabaseKey = process.env.VITE_SUPABASE_SERVICE_KEY;
         const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
         const telegramChatId = process.env.TELEGRAM_CHAT_ID;
         
-        // تست: اگر Environment Variables تنظیم نشده باشند
+        // اگر Environment Variables تنظیم نشده باشد
         if (!supabaseUrl || !supabaseKey) {
-            console.log('⚠️ تست: Environment Variables تنظیم نشده');
-            // برای تست، یک پاسخ موفقیت‌آمیز شبیه‌سازی می‌کنیم
+            console.log('⚠️ Environment Variables تنظیم نشده - حالت تست');
+            // حالت تست: بدون اتصال به Supabase
             return {
                 statusCode: 200,
                 headers,
@@ -99,12 +100,19 @@ exports.handler = async (event, context) => {
         
         if (supabaseError) {
             console.error('❌ خطای Supabase:', supabaseError);
-            throw supabaseError;
+            return {
+                statusCode: 500,
+                headers,
+                body: JSON.stringify({ 
+                    success: false, 
+                    error: 'Database error: ' + supabaseError.message 
+                })
+            };
         }
         
-        console.log('✅ کاربر در Supabase ذخیره شد:', user.id);
+        console.log('✅ کاربر در Supabase ذخیره شد. ID:', user.id);
         
-        // اگر توکن تلگرام تنظیم شده باشد، ارسال کنیم
+        // ارسال به تلگرام (اگر توکن تنظیم شده باشد)
         if (telegramToken && telegramChatId) {
             try {
                 const message = `
@@ -151,11 +159,10 @@ exports.handler = async (event, context) => {
                 });
                 
                 const telegramResult = await telegramResponse.json();
-                console.log('📨 پیام به تلگرام ارسال شد:', telegramResult.ok);
+                console.log('📨 نتیجه تلگرام:', telegramResult.ok ? '✅ ارسال شد' : '❌ خطا');
                 
             } catch (telegramError) {
                 console.error('⚠️ خطا در ارسال به تلگرام:', telegramError);
-                // خطای تلگرام نباید ثبت‌نام را متوقف کند
             }
         } else {
             console.log('⚠️ توکن تلگرام تنظیم نشده - پیام ارسال نشد');
